@@ -122,7 +122,7 @@ newTrial( "sample1" ,
                 .log()
                 )
         ,
-        newMediaRecorder("recording", "audio")
+        newMediaRecorder("sample1", "audio")
             .css("font-size", "1.5em")
             .print()
             .log()
@@ -134,20 +134,6 @@ newTrial( "sample1" ,
             .wait()
     )
 
-
-Template("SampleSlides.csv",
-    variable => newTrial( "SampleSlides" ,
-    newImage(variable.ImageFile)
-        .size(1050, 186)
-        .print()
-        .center()
-    ,
-    newButton("Next")
-        .css("font-size", "1.5em")
-        .print()
-        .wait()
-    )
-)
 
 newTrial("getready",
 	defaultText
@@ -231,7 +217,7 @@ Template( "myTable.csv" ,
                 .log()
                 )
         ,
-        newMediaRecorder("recording", "audio")
+        newMediaRecorder(variable, "audio")
             .css("font-size", "1.5em")
             .print()
             .log()
