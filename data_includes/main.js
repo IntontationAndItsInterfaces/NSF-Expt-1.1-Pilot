@@ -1,52 +1,89 @@
 PennController.ResetPrefix(null) // Shorten command names (keep this line here)
-// Show the 'welcome' trial first, then all the 'experiment' trial
-// then send the results and finally show the trial labeled 'final'
+
+
+
+// =============
+// custom Javascript functions:
+// =============
 function getRandomInt(max) {
-        return Math.floor(Math.random() * Math.floor(max));
-        }
+	return Math.floor(Math.random() * Math.floor(max));
+}
+
+const CSVToArray = (data, delimiter = ',', omitFirstRow = false) =>
+	data
+		.slice(omitFirstRow ? data.indexOf('\n') + 1 : 0)
+		.split('\n')
+		.map(v => v.split(delimiter));
+
+function getNumLines(colName) {
+	// UPDATE THIS VARIABLE TO BE THE CONTENTS OF THE .CSV FILE, AFTER REPLACING EACH LINEBREAK WITH "\n"
+	var textCSV = "ImageFile\n1A.jpg\n14B.jpg\n3C.jpg\n4D.jpg\n5A.jpg\n6B.jpg\n7C.jpg\n8D.jpg\n9A.jpg\n10B.jpg\n11C.jpg\n12D.jpg"
+	var arrayCSV = CSVToArray(textCSV);
+	var col = arrayCSV.map(function(value,index) { return value[arrayCSV[0].indexOf(colName)]; });
+	var filtered = col.filter(function (el) {
+	  return el != "";
+	});
+    nl = filtered.length;
+	return(nl-1);
+}
 
 
-Sequence( "init", "instructions", "instructions2", "sample1", "getready", randomize("experiment"), "final" )
+
+// =============
+// Sequence for how to run the PennController:
+// =============
+Sequence("whoareyou", "init", "instructions", "instructions2", "sample1", "getready", randomize("experiment"), "final" )
 
 
+
+// =============
+// This must be in the sequence by the time a recorder is created:
+// =============
 InitiateRecorder("https://plinglab.princeton.edu/IBEX/ex11p/ex11p-up.php")
-    .label("init")
-    .setOption("hideProgressBar",true)
+	.label("init")
+	.setOption("hideProgressBar",true)
 
 
+
+// =============
+// Setting some variables
+// =============
 Header(
 	// The number of trials in the csv file
-	newVar("trialsTotal", 12)
+	newVar("trialsTotal", 0)
 		.global()
+	,
+	getVar("trialsTotal")
+		.set(v => v + getNumLines("ImageFile"))
 	,
 	// The number of trials completed
 	newVar("trialsDone", 0)
 		.global()
 	,
-    // We will use this global Var element later to store the participant's name
-    newVar("ParticipantName")
-        .global()
-    ,
-    // Delay of 250ms before every trial
-    newTimer(250)
-        .start()
-        .wait()
+	// We will use this global Var element later to store the participant's name
+	newVar("ParticipantName")
+		.global()
+	,
+	// Delay of 250ms before every trial
+	newTimer(250)
+		.start()
+		.wait()
 )
 .log( "Name" , getVar("ParticipantName") )
 // This log command adds a column reporting the participant's name to every line saved to the results
 
 
-// =============
-// Instructions
-// =============
 
+// =============
+// Instructions + Sample
+// =============
 newTrial("instructions",
-    // this is how you concatenate in PCIbex -- create a new variable, set it to the an one, and then add up the new variable with other parts of a string
-    newVar("newstring")
-        .set(getVar("trialsTotal"))
-        .set(v => "<h2>Before Beginning: Your voice will be recorded</h2><ul><li>Make sure you have a <b>working microphone</b> on your device.</li><li>Make sure that <b>NO OTHER APPS</b> (e.g., Zoom) are using your microphone at the moment.</li><li>Also please make sure your surroundings are <b>as quiet as possible</b> (no TVs, music, etc. in the background).</li></ul><p><u><b>Instructions:</b></u><ul><li>In this task, you will be shown "+v+" short comic strips.</li><li>Your task is to <b>read over each strip <u>carefully</u></b>, and then <b>read aloud just <u>the one line</u> in the red bubble</b>.</li><li>We ask that you <b>take on the point of view</b> of the character whose line you are reading. Say the line the way that you think they would! (<i>This is sort of like doing voice acting</i>.)</li></ul></p><h2>While doing this task, your browser <u>will go fullscreen<u>.</h2>")
-    ,
-    newCanvas("theInstructions", 1088, 500)
+	// this is how you concatenate in PCIbex -- create a new variable, set it to the an one, and then add up the new variable with other parts of a string
+	newVar("newstring")
+		.set(getVar("trialsTotal"))
+		.set(v => "<h2>Before Beginning: Your voice will be recorded</h2><ul><li>Make sure you have a <b>working microphone</b> on your device.</li><li>Make sure that <b>NO OTHER APPS</b> (e.g., Zoom) are using your microphone at the moment.</li><li>Also please make sure your surroundings are <b>as quiet as possible</b> (no TVs, music, etc. in the background).</li></ul><p><u><b>Instructions:</b></u><ul><li>In this task, you will be shown "+v+" short comic strips.</li><li>Your task is to <b>read over each strip <u>carefully</u></b>, and then <b>read aloud just <u>the one line</u> in the red bubble</b>.</li><li>We ask that you <b>take on the point of view</b> of the character whose line you are reading. Say the line the way that you think they would! (<i>This is sort of like doing voice acting</i>.)</li></ul></p><h2>While doing this task, your browser <u>will go fullscreen<u>.</h2>")
+	,
+	newCanvas("theInstructions", 1088, 500)
 		.css("padding", "100px")
 		.add("center at 50%", "top at 0px", 
 			newText("numTrials","")
@@ -68,8 +105,8 @@ newTrial("instructions",
 
 
 newTrial("instructions2",
-    fullscreen()
-    ,
+	fullscreen()
+	,
 	newCanvas("moreInstructions", 1088, 500)
 		.css("padding", "100px")
 		.add("center at 50%", "top at 200px", 
@@ -94,9 +131,13 @@ newTrial( "sample1" ,
 	newText("instructionsLocal", "Read this comic strip CAREFULLY and then <b>answer the question</b> below about it. After that, <b>record yourself</b> speaking the line in the red bubble.")
 		.css("font-size", "20px")
 	,
-	newImage("comicstrip", "sample1.jpg")
+	newCanvas("comicstrip").center()
+	,
+	newCanvas("recorder").center()
+	,
+	newImage("sample1", "sample1.jpg")
 		.size(1050, 186)
-		.center()
+		.print(getCanvas("comicstrip"))
 		.log()
 	,
 	newText("q1", "Who knows more about the contents of the red speech bubble?")
@@ -142,7 +183,7 @@ newTrial( "sample1" ,
 	,
 	getVar("question")
 		.set(v => getRandomInt(2))
-    ,
+	,
 	newButton("moveOn", "Continue")
 		.css("font-size", "12px")
 		.center()
@@ -163,7 +204,7 @@ newTrial( "sample1" ,
 // FIRST CANVAS
 	newCanvas("questionTime", 1088, 500)
 		.css("padding", "100px")
-		.add("center at 50%", "top at 100px", getImage("comicstrip"))
+		.add("center at 50%", "top at 100px", getCanvas("comicstrip"))
 		.add("center at 50%", "top at 50px", getText("instructionsLocal"))
 	,
 	getVar("question")
@@ -194,7 +235,7 @@ newTrial( "sample1" ,
 							.center()
 							.color("red")
 					)
-					.print( "center at 50%", "top at 50%")
+					.print( "center at 50%", "top at 500px", "questionTime")
 			)
 		)
 	,
@@ -204,7 +245,7 @@ newTrial( "sample1" ,
 // SECOND CANVAS
 	newCanvas("moreQuestions", 1088, 500)
 		.css("padding", "100px")
-		.add("center at 50%", "top at 100px", getImage("comicstrip"))
+		.add("center at 50%", "top at 100px", getCanvas("comicstrip"))
 		.add("center at 50%", "top at 50px", getText("instructionsLocal"))
 		.add("center at 50%", "top at 290px", getText("q3"))
 		.add("center at 50%", "top at 310px", getScale("MakesSense"))
@@ -225,7 +266,7 @@ newTrial( "sample1" ,
 							.center()
 							.color("red")
 					)
-					.print( "center at 50%", "top at 50%")
+					.print( "center at 50%", "top at 500px", "moreQuestions")
 			)
 		)
 	,
@@ -235,37 +276,25 @@ newTrial( "sample1" ,
 // THIRD CANVAS
 	newCanvas("recordingTime", 1088, 500)
 		.css("padding", "100px")
-		.add("center at 50%", "top at 100px", getImage("comicstrip"))
+		.add("center at 50%", "top at 100px", getCanvas("comicstrip"))
 		.add("center at 50%", "top at 50px", getText("instructionsLocal"))
-		.add("center at 50%", "top at 290px", 
-			newMediaRecorder("sample1.jpg"+"-audio", "audio")
-				.css("font-size", "12px")
-	        	.log()
-	        	.record()
-	    )
-		.add("center at 50%", "bottom at 500px", getButton("done"))
+		.add("center at 50%", "top at 290px", getCanvas("recorder"))
 		.scaling("page")
 		.print("center at 50%", "top at 50px")
 	,
+	newMediaRecorder("sample1.jpg", "audio").css("font-size", "12px").log().record().print(getCanvas("recorder")).wait()
+	,
 	getButton("done")
-        .wait(getMediaRecorder("sample1.jpg"+"-audio").test.recorded()
-			.success(getCanvas("feedback3").remove())
-			.failure(
-				newCanvas("feedback3", "100vw", "4vh")
-					.add( "center at 50%", "middle at 50%", 
-						newText("errorR-s", "You must stop the recording first.")
-							.css("font-size", "14px")
-							.center()
-							.color("red")
-					)
-					.print( "center at 50%", "top at 50%")
-			)
-        )
+		.print("center at 50%", "bottom at 500px", "recordingTime")
+		.wait()
 )
 .setOption("hideProgressBar",true)
 
 
 
+// =============
+// Starting the actual trials
+// =============
 newTrial("getready",
 	newCanvas("readyForMore", 1088, 500)
 		.css("padding", "100px")
@@ -287,14 +316,13 @@ newTrial("getready",
 
 
 
-// This Template command generates as many trials as there are rows in myTable.csv
-Template( "myTable.csv" ,
-    // Row will iteratively point to every row in myTable.csv
-    variable => newTrial( "experiment" ,
-		newImage("comicstrip", variable.ImageFile)
-			.size(1050, 186)
-			.center()
-			.log()
+Template( "fullList.csv" ,
+	variable => newTrial( "experiment" ,
+		newCanvas("comicstrip").center()
+		,
+		newCanvas("recorder").center()
+		,
+		newImage(variable.ImageFile+"-img", variable.ImageFile).size(1050, 186).print(getCanvas("comicstrip")).log()
 		,
 		newText("q1", "Who knows more about the contents of the red speech bubble?")
 			.color("blue").bold()
@@ -343,14 +371,14 @@ Template( "myTable.csv" ,
 		getVar("trialsDone")
 			.set(v => v+1)
 		,
-	    newText("prog", "")
-        .text(getVar("trialsDone"))
-        .css("font-size", "10px")
-        .before(newText("roundNo", "Round #").css("font-size", "10px"))
-        .after(newText(" of&nbsp;")
-            .css("font-size", "10px")
-            .after(newText("total", "").css("font-size", "10px").text(getVar("trialsTotal"))))
-        ,
+		newText("prog", "")
+		.text(getVar("trialsDone"))
+		.css("font-size", "10px")
+		.before(newText("roundNo", "Round #").css("font-size", "10px"))
+		.after(newText(" of&nbsp;")
+			.css("font-size", "10px")
+			.after(newText("total", "").css("font-size", "10px").text(getVar("trialsTotal"))))
+		,
 		newButton("moveOn", "Continue")
 			.css("font-size", "12px")
 			.center()
@@ -371,7 +399,7 @@ Template( "myTable.csv" ,
 	// FIRST CANVAS
 		newCanvas("questionTime", 1088, 500)
 			.css("padding", "100px")
-			.add("center at 50%", "top at 100px", getImage("comicstrip"))
+			.add("center at 50%", "top at 100px", getCanvas("comicstrip"))
 			.add("center at 50%", "top at 50px", getText("prog"))
 		,
 		getVar("question")
@@ -402,7 +430,7 @@ Template( "myTable.csv" ,
 								.center()
 								.color("red")
 						)
-						.print( "center at 50%", "top at 50%")
+					.print( "center at 50%", "top at 500px", "questionTime")
 				)
 			)
 		,
@@ -412,7 +440,7 @@ Template( "myTable.csv" ,
 	// SECOND CANVAS
 		newCanvas("moreQuestions", 1088, 500)
 			.css("padding", "100px")
-			.add("center at 50%", "top at 100px", getImage("comicstrip"))
+			.add("center at 50%", "top at 100px", getCanvas("comicstrip"))
 			.add("center at 50%", "top at 50px", getText("prog"))
 			.add("center at 50%", "top at 290px", getText("q3"))
 			.add("center at 50%", "top at 310px", getScale("MakesSense"))
@@ -433,7 +461,7 @@ Template( "myTable.csv" ,
 								.center()
 								.color("red")
 						)
-						.print( "center at 50%", "top at 50%")
+					.print( "center at 50%", "top at 500px", "moreQuestions")
 				)
 			)
 		,
@@ -443,32 +471,16 @@ Template( "myTable.csv" ,
 	// THIRD CANVAS
 		newCanvas("recordingTime", 1088, 500)
 			.css("padding", "100px")
-			.add("center at 50%", "top at 100px", getImage("comicstrip"))
-			.add("center at 50%", "top at 50px", getText("prog"))
-			.add("center at 50%", "top at 290px", 
-				newMediaRecorder(variable.ImageFile+"-audio", "audio")
-					.css("font-size", "12px")
-		        	.log()
-		        	.record()
-		    )
-			.add("center at 50%", "bottom at 500px", getButton("done"))
+			.add("center at 50%", "top at 100px", getCanvas("comicstrip"))
+			.add("center at 50%", "top at 290px", getCanvas("recorder"))
 			.scaling("page")
 			.print("center at 50%", "top at 50px")
 		,
+		newMediaRecorder("sample1.jpg", "audio").css("font-size", "12px").log().record().print(getCanvas("recorder")).wait()
+		,
 		getButton("done")
-	        .wait(getMediaRecorder(variable.ImageFile+"-audio").test.recorded()
-				.success(getCanvas("feedback3").remove())
-				.failure(
-					newCanvas("feedback3", "100vw", "4vh")
-						.add( "center at 50%", "middle at 50%", 
-							newText("errorR-s", "You must stop the recording first.")
-								.css("font-size", "14px")
-								.center()
-								.color("red")
-						)
-						.print( "center at 50%", "top at 50%")
-				)
-	        )
+			.print("center at 50%", "bottom at 500px", "recordingTime")
+			.wait()
 	)
 	.setOption("hideProgressBar",true)
 )
@@ -476,8 +488,8 @@ Template( "myTable.csv" ,
 
 
 newTrial("final",
-    exitFullscreen()
-    ,
+	exitFullscreen()
+	,
 	newCanvas("allDone", 1088, 500)
 		.css("padding", "100px")
 		.add("center at 50%", "top at 200px", 
@@ -493,8 +505,8 @@ newTrial("final",
 		.print("center at 50%", "top at 50px")
 	,
 	// Upload the recordings:
-    UploadRecordings("sendAsync", "noblock")
-    ,
+	UploadRecordings("sendAsync", "noblock")
+	,
 	getButton("Finish")
 		.wait()
 )
